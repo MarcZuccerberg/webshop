@@ -72,6 +72,7 @@
       padding: 10px 20px;
       cursor: pointer;
       border-radius: 5px;
+      margin: 0 5px;
     }
     button:hover {
       background-color: #00b3cc;
@@ -125,6 +126,14 @@
       padding: 10px;
       margin: 10px 0;
       border-radius: 5px;
+      position: relative;
+    }
+    .request.complete {
+      background-color: #006600;
+    }
+    .request button {
+      padding: 5px 10px;
+      font-size: 12px;
     }
     #terms, #privacy {
       margin-top: 20px;
@@ -199,6 +208,14 @@
       const request = document.createElement('div');
       request.className = 'request';
       request.innerHTML = `<strong>${name}</strong> - ${type} (${price}$): ${description}`;
+      const denyBtn = document.createElement('button');
+      denyBtn.textContent = 'Deny';
+      denyBtn.onclick = () => request.remove();
+      const completeBtn = document.createElement('button');
+      completeBtn.textContent = 'Complete';
+      completeBtn.onclick = () => request.classList.add('complete');
+      request.appendChild(denyBtn);
+      request.appendChild(completeBtn);
       document.getElementById('requestList').appendChild(request);
 
       const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=modhydraziine@gmail.com&amount=${price}&currency_code=USD&return=https://marczuccerberg.github.io/webstore&no_shipping=1`;
