@@ -142,7 +142,7 @@
     }
   </style>
 </head>
-<body>
+<body onload="loadRequests()">
   <h1>Custom Webshop</h1>
   <div class="product">
     <h2>Custom Webpage - $20</h2>
@@ -177,7 +177,7 @@
       </div>
       <div id="privacy">
         <h3>Privacy Policy</h3>
-        <p>We collect your name/alias and description to process your order. This data is displayed on-site in the request list and not shared with third parties. You may request data removal by contacting the seller directly. Cookies are not used. This policy may update; check back periodically.</p>
+        <p>We collect your name/alias and description to process your order. This data is stored locally in your browser and displayed on-site in the request list. You may request data removal by contacting the seller directly. Cookies are not used. This policy may update; check back periodically.</p>
       </div>
     </div>
   </div>
@@ -192,6 +192,46 @@
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
       document.getElementById('purchaseForm').reset();
+    }
+
+    function loadRequests() {
+      const requestList = document.getElementById('requestList');
+      requestList.innerHTML = '';
+      const requests = JSON.parse(localStorage.getItem('requests') || '[]');
+      requests.forEach(request => {
+        const div = document.createElement('div');
+        div.className = `request ${request.complete ? 'complete' : ''}`;
+        div.innerHTML = `<strong>${request.name}</strong> - ${request.type} (${request.price}$): ${request.description}`;
+        const denyBtn = document.createElement('button');
+        denyBtn.textContent = 'Deny';
+        denyBtn.onclick = () => {
+          div.remove();
+          saveRequests();
+        };
+        const completeBtn = document.createElement('button');
+        completeBtn.textContent = 'Complete';
+        completeBtn.onclick = () => {
+          div.classList.add('complete');
+          saveRequests();
+        };
+        div.appendChild(denyBtn);
+        div.appendChild(completeBtn);
+        requestList.appendChild(div);
+      });
+    }
+
+    function saveRequests() {
+      const requests = [];
+      document.querySelectorAll('.request').forEach(request => {
+        requests.push({
+          name: request.querySelector('strong').textContent,
+          type: request.textContent.match(/ - (\w+) \(/)[1],
+          price: request.textContent.match(/\(\$(\d+)\)/)[1],
+          description: request.textContent.split(': ')[1].split(' Deny')[0],
+          complete: request.classList.contains('complete')
+        });
+      });
+      localStorage.setItem('requests', JSON.stringify(requests));
     }
 
     function handleSubmit(event) {
@@ -211,10 +251,16 @@
       request.innerHTML = `<strong>${name}</strong> - ${type} (${price}$): ${description}`;
       const denyBtn = document.createElement('button');
       denyBtn.textContent = 'Deny';
-      denyBtn.onclick = () => request.remove();
+      denyBtn.onclick = () => {
+        request.remove();
+        saveRequests();
+      };
       const completeBtn = document.createElement('button');
       completeBtn.textContent = 'Complete';
-      completeBtn.onclick = () => request.classList.add('complete');
+      completeBtn.onclick = () => {
+        request.classList.add('complete');
+        saveRequests();
+      };
       request.appendChild(denyBtn);
       request.appendChild(completeBtn);
       document.getElementById('requestList').appendChild(request);
@@ -222,6 +268,7 @@
       const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=modhydraziine@gmail.com&amount=${price}&currency_code=USD&return=https://marczuccerberg.github.io/webstore&no_shipping=1`;
       window.open(paypalUrl, '_blank');
 
+      saveRequests();
       closeModal();
     }
 
