@@ -1,0 +1,217 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Webshop</title>
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #00ff00;
+    }
+    .product {
+      background-color: #2a2a2a;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 5px;
+      width: 300px;
+      text-align: center;
+    }
+    button {
+      background-color: #00ccff;
+      color: #1a1a1a;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #00b3cc;
+    }
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+    }
+    #modal-content {
+      background-color: #2a2a2a;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 5px;
+      color: #e0e0e0;
+    }
+    .close {
+      color: #ff0000;
+      float: right;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    input, textarea {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #3a3a3a;
+      border: 1px solid #00ccff;
+      color: #e0e0e0;
+    }
+    #submitBtn {
+      background-color: #00ff00;
+    }
+    #submitBtn:hover {
+      background-color: #00cc00;
+    }
+    #requests {
+      margin-top: 20px;
+      width: 80%;
+      max-width: 600px;
+    }
+    .request {
+      background-color: #3a3a3a;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    #terms, #privacy {
+      margin-top: 20px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Custom Webshop</h1>
+  <div class="product">
+    <h2>Custom Webpage - $20</h2>
+    <button onclick="showModal(20, 'webpage')">Purchase</button>
+  </div>
+  <div class="product">
+    <h2>Custom Song - $20</h2>
+    <button onclick="showModal(20, 'song')">Purchase</button>
+  </div>
+  <div class="product">
+    <h2>Dual Bundle (Webpage + Song) - $35</h2>
+    <button onclick="showModal(35, 'bundle')">Purchase</button>
+  </div>
+
+  <div id="requests">
+    <h2>Pending Requests</h2>
+    <div id="requestList"></div>
+  </div>
+
+  <div id="modal">
+    <div id="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>Purchase Details</h2>
+      <form id="purchaseForm" onsubmit="handleSubmit(event)">
+        <input type="text" id="name" placeholder="Name or Alias" required>
+        <textarea id="description" placeholder="Describe what you want (max 5000 characters)" maxlength="5000" required></textarea>
+        <button type="submit" id="submitBtn">Submit</button>
+      </form>
+      <div id="terms">
+        <h3>Terms of Service</h3>
+        <p>This webshop is for personal use, primarily serving friends and family. By purchasing, you agree to pay the listed price via PayPal to modhydraziine@gmail.com. All custom work (webpages, songs) will be delivered within a reasonable timeframe, subject to creator availability. Refunds are at the discretion of the seller. No guarantees are made regarding delivery speed or final product quality. Disputes should be resolved amicably. This is not a legally binding contract but a good-faith agreement.</p>
+      </div>
+      <div id="privacy">
+        <h3>Privacy Policy</h3>
+        <p>We collect your name/alias and description to process your order. This data is displayed on-site in the request list and not shared with third parties. You may request data removal by contacting the seller directly. Cookies are not used. This policy may update; check back periodically.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showModal(price, type) {
+      document.getElementById('modal').style.display = 'block';
+      document.getElementById('purchaseForm').dataset.price = price;
+      document.getElementById('purchaseForm').dataset.type = type;
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('purchaseForm').reset();
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const description = document.getElementById('description').value;
+      const price = event.target.dataset.price;
+      const type = event.target.dataset.type;
+
+      if (!name || !description) {
+        alert('Please fill out all fields.');
+        return;
+      }
+
+      const request = document.createElement('div');
+      request.className = 'request';
+      request.innerHTML = `<strong>${name}</strong> - ${type} (${price}$): ${description}`;
+      document.getElementById('requestList').appendChild(request);
+
+      const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=modhydraziine@gmail.com&amount=${price}&currency_code=USD&return=https://marczuccerberg.github.io/webstore&no_shipping=1`;
+      window.open(paypalUrl, '_blank');
+
+      closeModal();
+    }
+
+    window.onclick = function(event) {
+      if (event.target == document.getElementById('modal')) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>
