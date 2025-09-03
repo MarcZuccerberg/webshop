@@ -72,7 +72,6 @@
       padding: 10px 20px;
       cursor: pointer;
       border-radius: 5px;
-      margin: 0 5px;
     }
     button:hover {
       background-color: #00b3cc;
@@ -116,33 +115,13 @@
     #submitBtn:hover {
       background-color: #00cc00;
     }
-    #requests {
-      margin-top: 20px;
-      width: 80%;
-      max-width: 600px;
-    }
-    .request {
-      background-color: #3a3a3a;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      position: relative;
-    }
-    .request.complete {
-      background-color: #006600;
-    }
-    .request button {
-      padding: 5px 10px;
-      font-size: 12px;
-      margin-left: 10px;
-    }
     #terms, #privacy {
       margin-top: 20px;
       font-size: 12px;
     }
   </style>
 </head>
-<body onload="loadRequests()">
+<body>
   <h1>Custom Webshop</h1>
   <div class="product">
     <h2>Custom Webpage - $20</h2>
@@ -157,18 +136,12 @@
     <button onclick="showModal(35, 'bundle')">Purchase</button>
   </div>
 
-  <div id="requests">
-    <h2>Pending Requests</h2>
-    <div id="requestList"></div>
-  </div>
-
   <div id="modal">
     <div id="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
       <h2>Purchase Details</h2>
       <form id="purchaseForm" onsubmit="handleSubmit(event)">
-        <input type="text" id="name" placeholder="Name or Alias" required>
-        <textarea id="description" placeholder="Describe what you want (max 5000 characters)" maxlength="5000" required></textarea>
+        <p>Please complete your purchase via PayPal. After payment, contact me (chrisbro009@gmail.com) with your name/alias and details of your request.</p>
         <button type="submit" id="submitBtn">Submit</button>
       </form>
       <div id="terms">
@@ -177,7 +150,7 @@
       </div>
       <div id="privacy">
         <h3>Privacy Policy</h3>
-        <p>We collect your name/alias and description to process your order. This data is stored locally in your browser and displayed on-site in the request list. You may request data removal by contacting the seller directly. Cookies are not used. This policy may update; check back periodically.</p>
+        <p>We do not collect personal data on this site. After purchase, you may provide your name/alias and request details via email to chrisbro009@gmail.com, which will be used solely to fulfill your order. This data is not shared with third parties. You may request data removal by contacting the seller directly. Cookies are not used. This policy may update; check back periodically.</p>
       </div>
     </div>
   </div>
@@ -194,81 +167,14 @@
       document.getElementById('purchaseForm').reset();
     }
 
-    function loadRequests() {
-      const requestList = document.getElementById('requestList');
-      requestList.innerHTML = '';
-      const requests = JSON.parse(localStorage.getItem('requests') || '[]');
-      requests.forEach(request => {
-        const div = document.createElement('div');
-        div.className = `request ${request.complete ? 'complete' : ''}`;
-        div.innerHTML = `<strong>${request.name}</strong> - ${request.type} (${request.price}$): ${request.description}`;
-        const denyBtn = document.createElement('button');
-        denyBtn.textContent = 'Deny';
-        denyBtn.onclick = () => {
-          div.remove();
-          saveRequests();
-        };
-        const completeBtn = document.createElement('button');
-        completeBtn.textContent = 'Complete';
-        completeBtn.onclick = () => {
-          div.classList.add('complete');
-          saveRequests();
-        };
-        div.appendChild(denyBtn);
-        div.appendChild(completeBtn);
-        requestList.appendChild(div);
-      });
-    }
-
-    function saveRequests() {
-      const requests = [];
-      document.querySelectorAll('.request').forEach(request => {
-        requests.push({
-          name: request.querySelector('strong').textContent,
-          type: request.textContent.match(/ - (\w+) \(/)[1],
-          price: request.textContent.match(/\(\$(\d+)\)/)[1],
-          description: request.textContent.split(': ')[1].split(' Deny')[0],
-          complete: request.classList.contains('complete')
-        });
-      });
-      localStorage.setItem('requests', JSON.stringify(requests));
-    }
-
     function handleSubmit(event) {
       event.preventDefault();
-      const name = document.getElementById('name').value;
-      const description = document.getElementById('description').value;
       const price = event.target.dataset.price;
       const type = event.target.dataset.type;
-
-      if (!name || !description) {
-        alert('Please fill out all fields.');
-        return;
-      }
-
-      const request = document.createElement('div');
-      request.className = 'request';
-      request.innerHTML = `<strong>${name}</strong> - ${type} (${price}$): ${description}`;
-      const denyBtn = document.createElement('button');
-      denyBtn.textContent = 'Deny';
-      denyBtn.onclick = () => {
-        request.remove();
-        saveRequests();
-      };
-      const completeBtn = document.createElement('button');
-      completeBtn.textContent = 'Complete';
-      completeBtn.onclick = () => {
-        request.classList.add('complete');
-        saveRequests();
-      };
-      request.appendChild(denyBtn);
-      request.appendChild(completeBtn);
-      document.getElementById('requestList').appendChild(request);
 
       const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=modhydraziine@gmail.com&amount=${price}&currency_code=USD&return=https://marczuccerberg.github.io/webstore&no_shipping=1`;
       window.open(paypalUrl, '_blank');
 
-      saveRequests();
       closeModal();
     }
 
